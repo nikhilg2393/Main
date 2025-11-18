@@ -1,0 +1,44 @@
+---
+title: "HW3 Part A Prblm1"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r epa}
+library(dplyr)
+library(tidyverse)
+library(readr)
+library("plyr")
+mydir = "epa-aqi-data-annual"
+myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
+epadf = ldply(myfiles, read_csv, show_col_types = FALSE)
+epadf <- bind_rows(epadf)
+names(epadf) <- gsub(" ", "_", names(epadf))
+```
+
+```{r}
+library(ggplot2)
+ggplot(epadf, aes(x=factor(Year), y=`Median_AQI`)) +
+  geom_boxplot() +
+  labs(x="Year", title="Air Quality Index (AQI) has improved over time") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r}
+ggplot(epadf, aes(x=Year, y=`Median_AQI`)) +
+  geom_jitter(alpha=0.01) +
+  geom_smooth() +
+  labs(title="Air Quality Index (AQI) has improved over time") +
+  theme_minimal()
+```
+
+## Median AQI over the Years(1980-2019)
+
+The Median of Median AQI is almost steady over the period of 1980 to 2019. There was dip over the period of 1989 to 1997. 
+The outliners have also reduced over the years. The spread of the outliners from the medain have gone down.

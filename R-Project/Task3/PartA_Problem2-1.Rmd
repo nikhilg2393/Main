@@ -1,0 +1,61 @@
+---
+title: "HW3 Part 1 Pblm 2"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r epa}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("~/Downloads")
+mydir = "epa-aqi-data-annual"
+myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
+epadf = ldply(myfiles, read_csv, show_col_types = FALSE)
+names(epadf) <- gsub(" ", "_", names(epadf))
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(maps)
+library(data.table)
+epadf$Decade <-"NA"
+for(i in 1:nrow(epadf)){
+  j<-3
+  for(x in epadf[i,j]){
+    if(x=="1980"||x=="1981"||x=="1982"||x=="1983"||x=="1984"||x=="1985"||x=="1986"||x=="1987"||x=="1988"||x=="1989"){
+        epadf[i,20]<- '1980-1989'
+    }
+    else if(x=="1990"||x=="1991"||x=="1992"||x=="1993"||x=="1994"||x=="1995"||x=="1996"||x=="1997"||x=="1998"||x=="1999"){
+        epadf[i,20]<- '1990-1999'
+    }
+    else if(x=="2000"||x=="2001"||x=="2002"||x=="2003"||x=="2004"||x=="2005"||x=="2006"||x=="2007"||x=="2008"||x=="2009"){
+        epadf[i,20]<- '2000-2009'
+    }
+    else if(x=="2010"||x=="2011"||x=="2012"||x=="2013"||x=="2014"||x=="2015"||x=="2016"||x=="2017"||x=="2018"||x=="2019"){
+        epadf[i,20]<- '2010-2019'
+    }
+  }
+}
+epadf1 <- setDT(epadf)[ , .(mean_Median_AQI = mean(Median_AQI)), by = list(State, Decade)]
+epadf1$State = tolower(epadf1$State)
+mapdata <- map_data("state")
+mapdata <- mapdata %>%
+dplyr::rename(State = region)
+mapdata <- left_join(mapdata, epadf1, by="State")
+map1 <- ggplot(mapdata, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(aes(fill = mean_Median_AQI))+
+  facet_wrap(~Decade) +
+  scale_fill_viridis_c(option="cividis") +
+  labs(title="Mean Median AQI over Decades")
+map1
+```
+## Mean Median AQI over Decades
+
+The mean median AQI value has changed over year and the values have been up and down across different States. Plot has been included for the same to view the change over time.

@@ -1,0 +1,81 @@
+---
+title: "HW3 Part B Prblm 5"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r ddf}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("~/Downloads")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+ddfCountry <- read_csv(path1,show_col_types = FALSE)
+ddfW4R <- read_csv(path2,show_col_types = FALSE)
+ddfIMR <- read_csv(path3,show_col_types = FALSE)
+ddfLEY <- read_csv(path4,show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+ddfCountry1 <- subset(ddfCountry, !is.na(ddfCountry$world_4region))
+mapdata <- left_join(ddfCountry1, ddfW4R, by="world_4region")
+mapdata$count <- as.numeric(ave(mapdata$world_4region, mapdata$world_4region, FUN = length))
+ddfIMR$worldRegion <-"NA"
+for(i in 1:nrow(ddfIMR)){
+  j<-1
+  x <- ddfIMR[i,j]
+    for(k in 1:nrow(mapdata)){
+      if(x==mapdata[k,1]){
+        ddfIMR[i,4]<- mapdata[k,20]
+        break
+      }
+    }
+}
+mapdata1 <- left_join(ddfIMR, ddfLEY, by = c('geo'='geo', 'time'='time'))
+ggplot(ddfIMR, aes(y=infant_mortality_rate_per_1000_births, x=time)) +
+  geom_jitter() +
+  geom_smooth() +
+  labs(title='Infant Mortality rate per 1000 Births over years',
+       y='Mortality Rate/1000 Births', x="Years") +
+  facet_wrap(~worldRegion) +
+  theme_minimal()
+
+ggplot(mapdata1, aes(y=life_expectancy_years, x=time)) +
+  geom_jitter() +
+  geom_smooth() +
+  labs(title='Life Expectancy in years over time',
+       y='Life Expectancy in years', x="Years") +
+  facet_wrap(~worldRegion) +
+  theme_minimal()
+
+ggplot(mapdata1, aes(x=infant_mortality_rate_per_1000_births, y=life_expectancy_years)) +
+  geom_jitter() +
+  geom_smooth() +
+  labs(title='Life Expectancy over years vs Infant Mortality rate per 1000 Births',
+       x='Mortality Rate/1000 Births', y="Life Expectancy over Years") +
+  facet_wrap(~worldRegion) +
+  theme_minimal()
+```
+
+## Plot A: Mortality Rate per 1000 Births Over Years in each Region
+## Plot B: Life Expectancy in years over time
+## Plot C: Life Expectancy over years Vs Infant Mortality rate per 1000 Births
+
+Over the years the mortality rate per 1000 births has gone down in all regions. And the Life expectancy is has gone up in all the four regions. Both the parameters Mortality rate and life expectancy are inversely proportional to each other. 
+The Mortality rate per 1000 births has gone down to almost zero for Europe. Then followed for America and Asia which is higher than Europe in the late 2000s.The mortality rate of Africa is highest among all the 4 regions in the late 2000s.
+The life expectancy has gone over the years. The highest life expectancy is in Europe in the late 2000s then followed by Americas and Asia. The least increase is seen in Africa when compared to other regions.
+There is a steady increase in life expectency over the years and there is a steady decrease in mortality rate over the years.

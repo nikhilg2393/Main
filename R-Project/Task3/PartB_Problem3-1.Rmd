@@ -1,0 +1,42 @@
+---
+title: "HW3 Part B Prblm 3"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r ddf}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("~/Downloads")
+mydir = "ddf--gapminder--systema_globalis-master"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+ddfCountry <- read_csv(path1,show_col_types = FALSE)
+ddfW4R <- read_csv(path2,show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+ddfCountry1 <- subset(ddfCountry, !is.na(ddfCountry$world_4region))
+mapdata <- left_join(ddfCountry1, ddfW4R, by="world_4region")
+mapdata$count <- as.numeric(ave(mapdata$world_4region, mapdata$world_4region, FUN = length))
+legend_title <- "Regions"
+ggplot(mapdata, aes(x=world_4region, color=name.y)) +
+  geom_bar() +
+  labs(title='Number of Countries in each Region',
+       x='Regions',
+       y='Count of countries in each region',
+       colour='Regions')+
+  theme_minimal()
+```
+
+## Number of Countries in each region
+
+The above plot show the number of countroes in each region namely Africa, Europe, Asia and the Americas

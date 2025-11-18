@@ -1,0 +1,58 @@
+---
+title: "HW3 Part B Prblm 4"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r ddf}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("~/Downloads")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+ddfCountry <- read_csv(path1,show_col_types = FALSE)
+ddfW4R <- read_csv(path2,show_col_types = FALSE)
+ddfIMR <- read_csv(path3,show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+ddfCountry1 <- subset(ddfCountry, !is.na(ddfCountry$world_4region))
+mapdata <- left_join(ddfCountry1, ddfW4R, by="world_4region")
+mapdata$count <- as.numeric(ave(mapdata$world_4region, mapdata$world_4region, FUN = length))
+ddfIMR$worldRegion <-"NA"
+for(i in 1:nrow(ddfIMR)){
+  j<-1
+  for(x in ddfIMR[i,j]){
+    for(k in 1:nrow(mapdata)){
+      if(x==mapdata[k,1]){
+        ddfIMR[i,4]<- mapdata[k,20]
+        break
+      }
+    }
+  }
+}
+ggplot(ddfIMR, aes(y=infant_mortality_rate_per_1000_births, x=factor(time))) +
+  geom_boxplot() +
+  scale_x_discrete(breaks=seq(from=1800, to=2010, by=25)) +
+  labs(title='Infant Mortality rate per 1000 Births over years',
+       y='Mortality Rate/1000 Births', x="Years") +
+  facet_wrap(~worldRegion) +
+  theme_minimal()
+```
+
+## Mortality Rate per 1000 Births Over Years in each Region
+
+Over the years the mortality rate per 1000 births has gone down in all regions. 
+The Mortality rate per 1000 births has gone down to almost zero for Europe. Then followed for America and Asia which is higher than Europe in the late 2000s.The mortality rate of Africa is highest among all the 4 regions in the late 2000s.
