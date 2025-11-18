@@ -1,0 +1,99 @@
+---
+title: "HW 5 Part B Pblm 3"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(mlbench)
+library("stringr")
+library(modelr)
+library(reshape)
+library(tidyverse)
+data(PimaIndiansDiabetes2)
+piddf <- na.omit(PimaIndiansDiabetes2)
+```
+
+```{r}
+fit <- lm(pressure ~ diabetes, data=piddf)
+piddf %>%
+  add_predictions(fit) %>%
+  ggplot(aes(x=diabetes, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=diabetes, yend=pred), color="red") +
+  labs(title='Model Prediction for Blood Pressure for people with & without Diabetes',x="People with & without Diabetes", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_residuals(fit) %>%
+  ggplot(aes(x=diabetes, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Diabetes") +
+  theme_minimal()
+```
+```{r}
+piddf %>%
+  add_residuals(fit) %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq() +
+  labs(title="Residuals: Normal Quantiles") +
+  theme_minimal()
+```
+
+```{r}
+summary(fit)
+```
+
+```{r}
+piddf %>%
+  mutate(Diabetes=recode(diabetes,
+                         pos="Positive", neg="Negative")) %>%
+  ggplot(aes(x=Diabetes, y=pressure, fill=Diabetes)) +
+  geom_boxplot() +
+  labs(y="Blood pressure (mm Hg)",
+       title="Diabetes associated with higher blood pressure") +
+  theme_minimal()
+```
+
+```{r}
+N <- 300
+s <- sample_n(piddf, N)
+mean(s$pressure)
+sd(s$pressure)
+
+se <- sd(s$pressure) / sqrt(N)
+se
+
+nsamples <- 500
+h0mean <- 70
+h0 <- rnorm(nsamples, mean=h0mean, sd=se)
+h0 <- tibble(sample=seq_len(nsamples), mean=h0)
+
+ggplot(h0, aes(x=mean)) + 
+  geom_histogram(binwidth=0.05) +
+  geom_vline(xintercept=h0mean,
+             color="blue") +
+  geom_vline(xintercept=mean(s$pressure),
+             linetype="dotdash",
+             color="red") +
+  labs(title='Mean Simulation') +
+  theme_minimal()
+
+summarize(h0, PValue=mean(mean > mean(s$pressure))) 
+
+z <- (mean(s$pressure) - h0mean) / se
+1 - pnorm(z)
+```
+
+Chose the aplha value as 0.05. The larger the alpha value the farther the mean and sample mean. the smaller the value of alpha the closer the mean and sample mean.

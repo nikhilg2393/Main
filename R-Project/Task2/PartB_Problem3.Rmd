@@ -1,0 +1,53 @@
+---
+title: "HW2"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+
+dir1 <- "/Users/nikhilg/Downloads/NCAA-D1-APR-2003-14/DS0001"
+path <- file.path(dir1, "26801-0001-Data.tsv")
+apd <- read.csv(path, sep="\t")
+```
+
+```{r, fig.width=4, fig.height=4, out.width='50%'}
+library("dplyr")
+library("ggplot2")
+library("reshape2")
+
+apd <- apd %>%
+  select(-DATA_TAB_GENERALINFO) %>%
+  pivot_longer(cols=starts_with("APR_RATE"),
+               names_to="YEAR", values_to="APR") %>%
+  select(SCL_UNITID, SCL_NAME, SPORT_CODE, SPORT_NAME, YEAR, APR) %>%
+  mutate(YEAR=as.numeric(stringr::str_sub(YEAR, start=10, 13)))
+apd
+```
+
+```{r}
+ggplot(apd) +
+  geom_boxplot(aes(x=as.factor(YEAR), y=APR)) +
+  labs(x="Year", y="Academic Progress Rate",
+       title="APR increases from 2004 - 2014") +
+  theme_minimal()
+```
+## Years Vs APR
+
+It can been seen from the plot that there is a steady increase in the Academic Progress Rate of the Division 1 student atheletes over the period of 2004 to 2014.
+
+

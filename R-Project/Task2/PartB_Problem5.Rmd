@@ -1,0 +1,57 @@
+---
+title: "HW2"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+
+dir1 <- "/Users/nikhilg/Downloads/NCAA-D1-APR-2003-14/DS0001"
+path <- file.path(dir1, "26801-0001-Data.tsv")
+apd <- read.csv(path, sep="\t")
+```
+
+```{r, fig.width=4, fig.height=4, out.width='50%'}
+library("dplyr")
+library("ggplot2")
+library("reshape2")
+
+apd <- apd %>%
+  select(-DATA_TAB_GENERALINFO) %>%
+  pivot_longer(cols=starts_with("APR_RATE"),
+               names_to="YEAR", values_to="APR") %>%
+  select(SCL_UNITID, SCL_NAME, SPORT_CODE, SPORT_NAME, YEAR, APR) %>%
+  mutate(YEAR=as.numeric(stringr::str_sub(YEAR, start=10, 13)))
+apd
+```
+
+```{r}
+apd_gender %>%
+  filter(GENDER == "Men's") %>%
+  ggplot() +
+  geom_boxplot(aes(x=SPORT_NAME, y=APR)) +
+  labs(x="Sport", y="Academic Progress Rate",
+  title="Distribution of APR in men's sports") +
+coord_flip() +
+theme_minimal()
+```
+
+## Men's Sports Vs Total APR over all the years 
+
+We can infer from the plot that the mean of all men's sports are almost the same. But Men's Fencing has a long whiskers followed by Men's Cross country and Men's Lacrosse. The increase in APR is stead in most of the sports except for these 3.
+
+

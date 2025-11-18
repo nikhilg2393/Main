@@ -1,0 +1,80 @@
+---
+title: "HW4 Part B Pblm 4"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("/Users/nikhilg/IDMP/HW3")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+#path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+path5 <- file.path(mydir2, "ddf--datapoints--murder_per_100000_people--by--geo--time.csv")
+path6 <- file.path(mydir2, "ddf--datapoints--gdppercapita_us_inflation_adjusted--by--geo--time.csv")
+path7 <- file.path(mydir2, "ddf--datapoints--medical_doctors_per_1000_people--by--geo--time.csv")
+path8 <- file.path(mydir2, "ddf--datapoints--poverty_percent_people_below_550_a_day--by--geo--time.csv")
+ddfCountry <- read_csv(path1, show_col_types = FALSE)
+#ddfW4R <- read_csv(path2)
+ddfIMR <- read_csv(path3, show_col_types = FALSE)
+ddfLEY <- read_csv(path4, show_col_types = FALSE)
+ddfMPP <- read_csv(path5, show_col_types = FALSE)
+ddfGDP <- read_csv(path6, show_col_types = FALSE)
+ddfMDP <- read_csv(path7, show_col_types = FALSE)
+ddfPPP <- read_csv(path8, show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(reshape)
+mapdata <- left_join(ddfLEY, ddfIMR, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMPP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfGDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfPPP, by = c('geo'='geo', 'time'='time'))
+mapdata1 <- subset(mapdata, !is.na(mapdata$infant_mortality_rate_per_1000_births))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$life_expectancy_years))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$murder_per_100000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$gdppercapita_us_inflation_adjusted))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$medical_doctors_per_1000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$poverty_percent_people_below_550_a_day))
+
+map_data_part <- resample_partition(mapdata1,
+                                    p=c(train=0.6,
+                                        valid=0.2,
+                                        test=0.2))
+map_data_part
+mapdata_train <- mapdata1[-map_data_part$test$idx,]
+
+mapdata_cv <- crossv_kfold(mapdata_train, 10)
+
+mapdata_cv
+cv_t1 <- mapdata_cv %>%
+  mutate(fit = purrr::map(train,
+                   ~ lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data = .)),
+         rmse = purrr::map2_dbl(fit, test, ~ rmse(.x, .y)))
+
+cv_t1
+mean(cv_t1$rmse)
+
+cv_t2 <- mapdata_cv %>%
+  mutate(fit = purrr::map(train,
+                   ~ lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people + poverty_percent_people_below_550_a_day), data = .)),
+         rmse = purrr::map2_dbl(fit, test, ~ rmse(.x, .y)))
+cv_t2
+mean(cv_t2$rmse)
+```
+
+The mean value goes down as more predictors are added. This is not surprising as we add more predictors the mean value goes down as so do the outliners. So the smaller the mean value the better.

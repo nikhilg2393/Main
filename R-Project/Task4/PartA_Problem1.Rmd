@@ -1,0 +1,134 @@
+---
+title: "HW4 Part A Pblm 1"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("/Users/nikhilg/IDMP/HW3")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+#path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+path5 <- file.path(mydir2, "ddf--datapoints--murder_per_100000_people--by--geo--time.csv")
+path6 <- file.path(mydir2, "ddf--datapoints--gdppercapita_us_inflation_adjusted--by--geo--time.csv")
+path7 <- file.path(mydir2, "ddf--datapoints--medical_doctors_per_1000_people--by--geo--time.csv")
+path8 <- file.path(mydir2, "ddf--datapoints--poverty_percent_people_below_550_a_day--by--geo--time.csv")
+ddfCountry <- read_csv(path1, show_col_types = FALSE)
+#ddfW4R <- read_csv(path2)
+ddfIMR <- read_csv(path3, show_col_types = FALSE)
+ddfLEY <- read_csv(path4, show_col_types = FALSE)
+ddfMPP <- read_csv(path5, show_col_types = FALSE)
+ddfGDP <- read_csv(path6, show_col_types = FALSE)
+ddfMDP <- read_csv(path7, show_col_types = FALSE)
+ddfPPP <- read_csv(path8, show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(reshape)
+mapdata <- left_join(ddfLEY, ddfIMR, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMPP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfGDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfPPP, by = c('geo'='geo', 'time'='time'))
+mapdata1 <- subset(mapdata, !is.na(mapdata$infant_mortality_rate_per_1000_births))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$life_expectancy_years))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$murder_per_100000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$gdppercapita_us_inflation_adjusted))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$medical_doctors_per_1000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$poverty_percent_people_below_550_a_day))
+
+fit <- lm(life_expectancy_years ~ infant_mortality_rate_per_1000_births, data=mapdata1)
+fit1 <- lm(life_expectancy_years ~ murder_per_100000_people, data=mapdata1)
+fit2 <- lm(life_expectancy_years ~ gdppercapita_us_inflation_adjusted, data=mapdata1)
+fit3 <- lm(life_expectancy_years ~ medical_doctors_per_1000_people, data=mapdata1)
+fit4 <- lm(life_expectancy_years ~ poverty_percent_people_below_550_a_day, data=mapdata1)
+
+  mapdata1 %>%
+  add_predictions(fit) %>%
+  ggplot(aes(x=infant_mortality_rate_per_1000_births, y=life_expectancy_years)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm",color="red") +
+  geom_segment(aes(xend=infant_mortality_rate_per_1000_births, yend=pred), color="red") +
+  labs(title='Life Expectancy in years Vs Infant Mortality rate/1000 births') +
+  theme_minimal()
+  
+  mapdata1 %>%
+  add_predictions(fit1) %>%
+  ggplot(aes(x=murder_per_100000_people, y=life_expectancy_years)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm",color="red") +
+  geom_segment(aes(xend=murder_per_100000_people, yend=pred), color="green") +
+  labs(title='Life Expectancy in years Vs Murder/100000 people') +
+  theme_minimal()
+  
+  mapdata1 %>%
+  add_predictions(fit2) %>%
+  ggplot(aes(x=gdppercapita_us_inflation_adjusted, y=life_expectancy_years)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm",color="red") +
+  geom_segment(aes(xend=gdppercapita_us_inflation_adjusted, yend=pred), color="yellow") +
+  labs(title='Life Expectancy in years Vs GDP Per Capita US Inflation Adjusted') +
+  theme_minimal()
+  
+  mapdata1 %>%
+  add_predictions(fit3) %>%
+  ggplot(aes(x=medical_doctors_per_1000_people, y=life_expectancy_years)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm",color="red") +
+  geom_segment(aes(xend=medical_doctors_per_1000_people, yend=pred), color="purple") +
+  labs(title='Life Expectancy in years Vs Medical Doctors/1000 people') +
+  theme_minimal()
+  
+  mapdata1 %>%
+  add_predictions(fit4) %>%
+  ggplot(aes(x=poverty_percent_people_below_550_a_day, y=life_expectancy_years)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm",color="red") +
+  geom_segment(aes(xend=poverty_percent_people_below_550_a_day, yend=pred), color="magenta") +
+  labs(title='Life Expectancy in years Vs Poverty % people below 5.50$ a day') +
+  theme_minimal()
+
+```
+
+# Visualization of life expectancy vs the five predictors
+
+#Plot 1 Life Expectancy in years Vs Infant Mortality rate/1000 births
+
+Plot 1 is the plot of life expectancy against Infant Mortality rate per 1000 births. As you can see the relation is inversely proportional and as the infanty mortality increases the deviations from the mean is high.
+
+#Plot 2 Life Expectancy in years Vs Murder/100000 people
+
+Plot 2 is the plot of life expectancy against Murder per 100000 people. As you can see the relation is inversely proportional and only few values deviating from the mean.
+
+#Plot 3 Life Expectancy in years Vs GDP Per Capita US Inflation Adjusted
+
+Plot 3 is the plot of life expectancy against GDP Per Capita US Inflation Adjusted. As you can see the relation is directly proportional and as the GDP Per Capita increases the deviations from the mean is high.
+
+#Plot 4 Life Expectancy in years Vs Medical Doctors/1000 people
+
+Plot 4 is the plot of life expectancy against Medical Doctors per 1000 people. As you can see the relation is directly proportional and there are a lot of values which are deviating from the mean.
+
+#Plot 5 Life Expectancy in years Vs Poverty % people below 5.50$ a day
+
+Plot 5 is the plot of life expectancy against Poverty percentage people below 5.50$ a day. As you can see the relation is inversely proportional and there are a lot of values which are deviating from the mean.
+
+

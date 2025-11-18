@@ -1,0 +1,184 @@
+---
+title: "HW 6"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(tidytext)
+dir <- "/Users/nikhilg/IDMP/HW6"
+path <- file.path(dir, "twitter", "realDonaldTrump-20201106.csv")
+trump <- read_csv(path, col_types=cols(id=col_character()))
+```
+
+```{r}
+more_stop_words <- c("realdonaldtrump", "donaldtrump",
+                     "donald", "trump", "amp")
+trump_tidy <- trump %>%
+  filter(!isRetweet, str_detect(text, "[:space:]")) %>%
+  select(id, text, retweets, date) %>%
+  unnest_tokens("word", text, token="tweets") %>%
+  anti_join(stop_words, by="word") %>%
+  filter(!word %in% more_stop_words,
+         !str_detect(word, "http"),
+         !str_detect(word, "@"))
+```
+
+```{r}
+trump_tidy %>%
+  dplyr::count(word) %>%
+  top_n(20) %>%
+  ggplot(aes(x=reorder(word, n), y=n)) +
+  geom_col() +
+  coord_flip() +
+  labs(x="Term", y="Count",
+       title="Top terms in Donald Trump's tweets") +
+  theme_minimal()
+```
+
+```{r}
+library(lubridate)
+trump_tidy %>%
+  mutate(year=year(date)) %>%
+  filter(year %in% 2015:2020) %>%
+  dplyr::count(word, year) %>%
+  group_by(year) %>%
+  top_n(10) %>%
+  ggplot(aes(x=reorder_within(word, n, year),
+             y=n, fill=factor(year))) +
+  geom_col(show.legend=FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_y_continuous(labels=NULL) +
+  scale_fill_brewer(palette="Dark2") +
+  facet_wrap(~year, scales="free", ncol=2) +
+  labs(x="Term", y="Count",
+       title="Top terms in Trump's tweets by year") +
+  theme_minimal()
+```
+
+```{r}
+trump_year <- trump_tidy %>%
+  mutate(year=year(date)) %>%
+  filter(year %in% 2015:2020) %>%
+  dplyr::count(word, year) %>%
+  bind_tf_idf(word, year, n)
+```
+
+```{r}
+trump_year %>%
+  group_by(year) %>%
+  top_n(10, tf_idf) %>%
+  ggplot(aes(x=reorder_within(word, tf_idf, year),
+             y=tf_idf, fill=factor(year))) +
+  geom_col(show.legend=FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_y_continuous(labels=NULL) +
+  scale_fill_brewer(palette="Dark2") +
+  facet_wrap(~year, scales="free", ncol=2) +
+  labs(x="Term", y="tf-idf",title="Each year's characteristic terms from Trump's tweets") +
+theme_minimal()
+```
+
+```{r}
+trump_dtm <- trump_tidy %>%
+  filter(year(date) >= 2016) %>%
+  dplyr::count(id, word) %>%
+  cast_sparse(id, word, n)
+dim(trump_dtm)
+```
+
+```{r}
+trump_dtm[1:6, 1:6]
+```
+
+```{r}
+ trump_ids <- tibble(id=rownames(trump_dtm))
+trump_ids <- left_join(trump_ids, trump)
+trump_ids
+```
+
+```{r}
+trump_rt <- trump_ids$retweets
+```
+
+```{r}
+library(glmnet)
+set.seed(2020)
+fit_cv <- cv.glmnet(trump_dtm, trump_rt)
+plot(fit_cv)
+```
+
+```{r}
+fit_cv
+```
+
+```{r}
+trump_beta <- coef(fit_cv, s="lambda.min")
+trump_beta <- tibble(word=rownames(trump_beta),
+                     coef=as.numeric(trump_beta))
+trump_beta %>%
+  top_n(15) %>%
+  ggplot(aes(x=reorder(word, coef), y=coef)) +
+  geom_col() +
+  coord_flip() +
+  labs(x="Term", y="Regression Coefficient") +
+  theme_minimal()
+```
+
+```{r}
+ trump_lower <- trump %>%
+  filter(year(date) >= 2016) %>%
+  mutate(text=str_to_lower(text))
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "#fnn")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "starved")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "weli")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "quarantine")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "covfefe")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "way[:punct:]+and")) %>%
+  select(date, text, retweets)
+```
+
+```{r}
+ trump_lower %>%
+  filter(str_detect(text, "amazing[:punct:]+tremendous")) %>%
+  select(date, text, retweets)
+```

@@ -1,0 +1,25 @@
+---
+title: "HW 5 Part A Prblm 1"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(gridExtra)
+library(readr)
+library("plyr")
+dir1 <- "/Users/nikhilg/IDMP/HW5"
+path <- file.path(dir1, "mcu dataset.csv")
+mcudf <- read_csv(path, show_col_types = FALSE)
+names(mcudf) <- gsub(" ", "_", names(mcudf))
+options(dplyr.width = Inf)
+mcudf %>% as_tibble() %>% print(n=24)
+```
+
+I have worked on miniposter (The Marvel Cinematic Universe) of Shuchita Mishra NEU ID: 001020146. The dataset used for this is " https://www.kaggle.com/rachit239/mcu-complete-dataset "

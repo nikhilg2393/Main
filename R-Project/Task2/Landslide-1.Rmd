@@ -1,0 +1,66 @@
+---
+title: "MiniPoster"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      cache = FALSE,
+                      fig.align = 'center',
+                      out.width = '70%',
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+
+dir1 <- "~/Downloads"
+path <- file.path(dir1, "Global_Landslide_Catalog_Export.csv")
+drba <- read_csv(path)
+drba
+```
+
+```{r, fig.width=4, fig.height=4, out.width='50%'}
+library("dplyr")
+drba_f <- transmute(drba,
+                    category = landslide_category,
+                    count_f = fatality_count/100)
+  ggplot(drba_f, aes( x=category, y=count_f)) +
+  geom_point(alpha=1/5) +
+  geom_segment(aes(x=0, y=0, xend=15, yend=10), color="cyan") +
+  labs(x='Land Slide Category',
+       y='% Fatality due to landslides') +
+  theme_minimal()
+```
+## Including Plot 1
+
+Plot 1 
+From the plot we understand that landslides and mudslides are the major cause of fatality in most of the areas but the debris flow due all major disasters is also adding up to the fatality rate in most of the areas.
+
+```{r, fig.width=4, fig.height=4, out.width='50%'}
+library("dplyr")
+drba_f <- transmute(drba,
+                    size_f = landslide_size,
+                    count_f = fatality_count/100)
+  ggplot(drba_f, aes( x=size_f, y=count_f)) +
+  geom_point(alpha=1/5) +
+  geom_segment(aes(x=0, y=0, xend=7, yend=10), color="red") +
+  labs(x='Land Slide Size',
+       y='% Fatality due to landslides') +
+  theme_minimal()
+```
+## Including Plot 2
+
+Plot 2 
+From the plot we understand that large size and very large slides are contributing to most of fatality in the areas when compared to the other sized slides. This may be because catastrophic slides are rare and the other sized slides are not having much of an impact.

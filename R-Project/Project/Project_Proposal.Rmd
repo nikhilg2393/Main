@@ -1,0 +1,380 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message =FALSE}
+library(plyr)
+library(dplyr)
+library(readr)
+library(tidyverse)
+library(modelr)
+library(purrr)
+library(lubridate)
+
+```
+
+#data input and cleaning
+
+```{r}
+setwd("/Users/nikhilg/IDMP")
+mydir = "Project"
+path1 <- file.path(mydir, "netflix-rotten-tomatoes-metacritic-imdb.csv")
+df <- read_csv(path1, show_col_types = FALSE)
+
+```
+
+```{r}
+sum(is.na(df))
+```
+
+```{r}
+cbind(
+   lapply(
+     lapply(df, is.na)
+     , sum)
+   )
+```
+
+```{r}
+head(df)
+names(df) <- make.names(names(df), unique=TRUE)
+#Create new Score attribute by combining IMDB score and rotten tomatoes score
+df <- df %>% 
+  mutate(Score = if_else(is.na(IMDb.Score)==FALSE, IMDb.Score, Rotten.Tomatoes.Score/10))
+         
+print(sum(is.na(df$Score)))
+df = df %>% drop_na(Score)
+print(sum(is.na(df$Score)))
+head(df)
+
+
+```
+
+```{r}
+cbind(
+   lapply(
+     lapply(df, is.na)
+     , sum)
+   )
+```
+
+```{r}
+#Deleting Rotten.Tomatoes.Score and IMDb.Score as it is replaced by Score
+df = subset(df, select = -c(Rotten.Tomatoes.Score,IMDb.Score,Metacritic.Score,Awards.Nominated.For, Awards.Received,Production.House,TMDb.Trailer,Trailer.Site))
+
+head(df)
+
+```
+
+```{r}
+df = df %>%
+  separate_rows(Tags, sep = ",")
+df = df %>%
+  separate_rows(Director, sep = ",")
+df = df %>%
+  separate_rows(Genre, sep = ",")
+df = df %>%
+  separate_rows(Actors, sep = ",")
+df = df %>%
+  separate_rows(Writer, sep = ",")
+df = df %>%
+  separate_rows(Country.Availability, sep = ",")
+#df= df %>%
+ # separate_rows(Languages, sep = ",")
+
+head(df)
+```
+
+```{r}
+sum(is.na(df))
+df <- na.omit(df)
+sum(is.na(df))
+```
+
+```{r}
+cbind(
+   lapply(
+     lapply(df, is.na)
+     , sum)
+   )
+```
+
+```{r}
+length(unique(df[["Director"]]))
+length(unique(df[["Writer"]]))
+
+
+```
+
+```{r}
+# Dividing the data set into movies and series.
+
+df_movies = filter(df, Series.or.Movie == "Movie")
+df_series = filter(df, Series.or.Movie == "Series")
+
+head(df_movies)
+head(df_series)
+df_movies = drop_na(df_movies)
+df_series = drop_na(df_series)
+sum(is.na(df_movies))
+sum(is.na(df_series))
+
+```
+
+Taking up a lot of space: these two funtions
+
+df_movies = df_movies %>% separate_rows(Languages, sep = ",") df_series
+= df_series %>% separate_rows(Languages, sep = ",") df_movies
+
+df_1 = df_1 %>% arrange(desc(Score)
+
+#Director ## In Movies
+
+```{r}
+length(unique(df_movies[["Director"]]))
+df_1 = subset(df_movies, select = -c(Poster,Image,IMDb.Votes,	
+Summary,IMDb.Link,Netflix.Link,Netflix.Release.Date,Boxoffice,View.Rating,Actors,Writer,Runtime,Country.Availability,Hidden.Gem.Score
+,Series.or.Movie,Languages,Tags,Genre,Title))
+df_1
+df_2 <- df_1 %>%
+  group_by(Director) %>%
+  summarise_at(vars(Score), list(Score = mean)) %>% arrange(desc(Score))
+df_2
+
+df_2=df_2[1:11,]    
+df_2
+ggplot(df_2,aes(y=Director,x=Score)) +
+  geom_point(color='darkblue') +
+  theme_minimal()
+df_2=df_2[1:6,]
+df_2
+```
+
+#in series
+
+```{r}
+df_series
+df_3 = subset(df_series, select = -c(Poster,Image,IMDb.Votes,	
+Summary,IMDb.Link,Netflix.Link,Netflix.Release.Date,Boxoffice,View.Rating,Actors,Writer,Runtime,Country.Availability,Hidden.Gem.Score
+,Series.or.Movie,Languages,Tags,Genre,Title))
+df_3
+df_4 <- df_3 %>%
+  group_by(Director) %>%
+  summarise_at(vars(Score), list(Score = mean)) %>% arrange(desc(Score))
+df_4
+
+df_4=df_4[1:11,]
+df_4
+ggplot(df_4,aes(y=Director,x=Score)) +
+  geom_point(color='darkblue') +
+  theme_minimal()
+df_4=df_4[1:5,]
+df_4
+```
+
+#Writer ##movies
+
+```{r}
+
+length(unique(df_movies[["Writer"]]))
+df_5 = subset(df_movies, select = -c(Poster,Image,IMDb.Votes,	
+Summary,IMDb.Link,Netflix.Link,Netflix.Release.Date,Boxoffice,View.Rating,Actors,Director,Runtime,Country.Availability,Hidden.Gem.Score
+,Series.or.Movie,Languages,Tags,Genre,Title))
+df_5
+df_6 <- df_5 %>%
+  group_by(Writer) %>%
+  summarise_at(vars(Score), list(Score = mean)) %>% arrange(desc(Score))
+df_6
+
+df_6=df_6[1:11,]    
+df_6
+ggplot(df_6,aes(y=Writer,x=Score)) +
+  geom_point(color='darkblue') +
+  theme_minimal()
+df_6=df_6[1:5,]    
+df_6
+```
+
+##series
+
+```{r}
+
+length(unique(df_series[["Writer"]]))
+df_7 = subset(df_series, select = -c(Poster,Image,IMDb.Votes,	
+Summary,IMDb.Link,Netflix.Link,Netflix.Release.Date,Boxoffice,View.Rating,Actors,Director,Runtime,Country.Availability,Hidden.Gem.Score
+,Series.or.Movie,Languages,Tags,Genre,Title))
+df_7
+df_8 <- df_7 %>%
+  group_by(Writer) %>%
+  summarise_at(vars(Score), list(Score = mean)) %>% arrange(desc(Score))
+df_8
+
+df_8=df_8[1:11,]    
+df_8
+ggplot(df_8,aes(y=Writer,x=Score)) +
+  geom_point(color='darkblue') +
+  theme_minimal()
+df_8=df_8[1:5,]    
+df_8
+
+```
+
+```{r}
+
+df_1
+df_3
+df_5
+df_7
+
+df_1$Release.Date <- dmy(df_1$Release.Date)
+df_3$Release.Date <- dmy(df_3$Release.Date)
+df_5$Release.Date <- dmy(df_5$Release.Date)
+df_7$Release.Date <- dmy(df_7$Release.Date)
+
+
+df_1
+df_3
+df_5
+df_7
+df_2
+
+```
+
+```{r}
+
+sum(is.na(df_movies))
+df_movies
+df_8 <- df_movies %>%
+  group_by(Director) %>%
+arrange(desc(Release.Date))
+df_8
+df_8 = subset(df_8, select = -c(Poster,Image,IMDb.Votes,	
+Summary,IMDb.Link,Netflix.Link,Netflix.Release.Date,Boxoffice,View.Rating,Actors,Writer,Runtime,Country.Availability,Hidden.Gem.Score
+,Series.or.Movie,Languages,Tags,Genre,Title))
+df_8
+df
+```
+
+ignore this part have to amek few changes here
+
+```{r}
+length(unique(df[["Runtime"]]))
+unique(df[["Runtime"]])
+by_runtime <- group_by(df, Runtime)
+by_runtime
+#summarise(data, mean_score = mean(Score, na.rm = TRUE))
+
+df_rt <- df %>%
+  group_by(Runtime) %>%
+  summarise_at(vars(Score), list(Score = mean)) %>% arrange(desc(Runtime))
+df_rt
+df_rt <- df_rt[1:4,]
+df_rt
+ggplot(df_rt,aes(y=Score,x=Runtime)) +
+  geom_point(color='darkblue') +
+  theme_minimal()
+```
+
+Director Ratings over the decades (Vishnu) Writer Ratings over the
+decades (Vishnu)
+
+# PCA
+
+```{r}
+library(tidyverse)
+df_class = df
+df_class = drop_na(df_class)
+summary(df_class)
+head(df_class)
+as_tibble(df_class)
+```
+
+```{r}
+df_Class <- df_class[,c(6,22)]
+
+head(df_Class)
+df_Class <- as.matrix(df_Class)
+df_genre <- df_class$Genre
+table(df_genre)
+```
+
+```{r}
+
+df_new = subset(df_series, select = -c((1:5)))
+df_new = subset(df_new, select = -c((2:13)))
+df_new = subset(df_new, select = -c((3:4)))
+df_new1 = subset(df_new, select = -c((2:3)))
+head(df_new)
+df_movie_n <- sample_n(df_movies, 60000)
+df_movie_n
+df_new2 = subset(df_movie_n, select = -c((1:5)))
+df_new3 = subset(df_new2, select = -c((2:17)))
+
+```
+
+```{r}
+library(dendextend)
+dist_mat <- dist(df_Class, method = 'euclidean')
+hc1 <- hclust(dist_mat, method="complete")
+plot(hc1)
+avg_dend_obj <- as.dendrogram(hc1)
+avg_col_dend <- color_branches(avg_dend_obj, h = 7.3)
+plot(avg_col_dend)
+```
+
+```{r}
+library(Rtsne)
+library(tidyverse)
+df_new2 = subset(df_class, select = -c((1:5)))
+df_new3 = subset(df_new2, select = -c((2:19)))
+set.seed(1)
+tsne2 <- Rtsne(df_new3, perplexity=10, check_duplicates = FALSE)
+
+colnames(tsne2$Y) <- c("C1", "C2")
+
+tc2 <- as_tibble(tsne2$Y)
+tc2
+```
+
+```{r}
+hc1_cl <- factor(cutree(hc1, k=4))
+ggplot(df_class, aes(x=Score, y=Hidden.Gem.Score, color=hc1_cl, shape=hc1_cl)) +
+  geom_point() +
+  scale_color_brewer(palette="Set1") +
+  labs(shape="Cluster" ,color="Cluster",
+       title="Complete linkage") +
+  theme_minimal()
+```
+
+```{r}
+hc2 <- hclust(dist(df_Class), method="average")
+plot(hc2)
+avg_dend_obj <- as.dendrogram(hc2)
+avg_col_dend <- color_branches(avg_dend_obj, h = 3)
+plot(avg_col_dend)
+```
+
+```{r}
+hc2_cl <- factor(cutree(hc2, k=4))
+ggplot(df_class, aes(x=Score, y=Hidden.Gem.Score, color=hc2_cl, shape=hc2_cl)) +
+  geom_point() +
+  scale_color_brewer(palette="Set1") +
+  labs(shape="Cluster", color="Cluster",
+       title="Average linkage") +
+  theme_minimal()
+```
+
+```{r}
+set.seed(1)
+km <- kmeans(df_new3, centers=3)
+```
+
+```{r}
+km_cl <- factor(km$cluster)
+ggplot(df_class, aes(x=Score, y=Hidden.Gem.Score, color=km_cl, shape=km_cl)) +
+  geom_point() +
+  scale_color_brewer(palette="Set1") +
+  labs(shape="Cluster", color="Cluster") +
+  theme_minimal()
+```

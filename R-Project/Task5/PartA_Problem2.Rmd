@@ -1,0 +1,76 @@
+---
+title: "HW 5 Part A Prblm 2"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(gridExtra)
+library(readr)
+library("plyr")
+dir1 <- "/Users/nikhilg/IDMP/HW5"
+path <- file.path(dir1, "mcu dataset.csv")
+mcudf <- read_csv(path, show_col_types = FALSE)
+names(mcudf) <- gsub(" ", "_", names(mcudf))
+```
+
+```{r}
+library(ggplot2)
+library("stringr") 
+mcudf$Total_Gross_num = substring(mcudf$Total_Gross,2)
+mcudf$Total_Gross_num = str_remove_all(mcudf$Total_Gross_num , "[,]")
+mcudf$Total_Gross_num = as.numeric(mcudf$Total_Gross_num)
+mcudf$Total_Gross_num = mcudf$Total_Gross_num /1000000
+ggplot(data=mcudf) + 
+  geom_bar(mapping=aes(x=Name, y=Budget, group=IMDB_rating, color=IMDB_rating, fill=IMDB_rating),
+                              stat="identity")+
+  scale_y_discrete(guide = guide_axis(check.overlap = TRUE))+
+  coord_flip() +
+  labs(title="Highest Budgeted movie of the MCU Universe",
+       x="Movie Title",
+       y="Budget in US$")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+
+ggplot(data=mcudf) + 
+  geom_bar(mapping=aes(x=Name, y=Total_Gross_num, group=Phase, color=Phase, fill=Phase),
+                              stat="identity")+
+  labs(title="Highest Grossing movie of the MCU Universe",
+       x="Movie",
+       y="Total Gross (Million US$)")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+ggplot(mcudf, aes(x=IMDB_rating, y=metascore)) +
+  geom_point() +
+  geom_smooth(method = 'gam') +
+  labs(title="Both Ratings agree : Metascore Vs IMDB",
+       x="IMDB",
+       y="Metascore")+
+  theme_minimal()
+```
+
+```{r}
+mcudf$Budget_num = substring(mcudf$Budget,2)
+mcudf$Budget_num= str_remove_all(mcudf$Budget_num , "[,]")
+mcudf$Budget_num = as.numeric(mcudf$Budget_num)
+mcudf$Budget_num = mcudf$Budget_num /1000000
+
+ggplot(mcudf, aes(x=jitter(Budget_num), y=IMDB_rating)) +
+  geom_jitter() +
+  geom_smooth(stat = 'smooth', method = 'gam', formula = y ~ s(x, bs = "cs")) +
+  facet_wrap(~Phase) +
+  labs(title="Most Successful MCU Phase",
+       x="Budget in Million US$",
+       y="IMDB Rating")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```

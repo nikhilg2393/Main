@@ -1,0 +1,76 @@
+---
+title: "HW5 Part B Prblm 5"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(mlbench)
+library("stringr")
+library(modelr)
+library(reshape)
+library(tidyverse)
+data(PimaIndiansDiabetes2)
+piddf <- na.omit(PimaIndiansDiabetes2)
+```
+
+```{r}
+fit <- lm(pressure ~ mass, data=piddf)
+fit1 <- lm(pressure ~ diabetes, data=piddf)
+fit3 <- lm(pressure ~ diabetes + age + mass, data=piddf)
+```
+
+```{r}
+summary(fit3)
+```
+
+```{r}
+anova(fit, fit1)
+
+piddf1 <- piddf %>%
+  filter(mass %in% c(19:50)) %>%
+  transmute(pressure, mass,
+            mass_modi = mass,
+            mass = as.integer(mass_modi))
+
+N <- 25
+pidff_subset <- piddf1 %>%
+  sample_n(N) %>%
+  mutate(mass_modi = mass,
+         mass = as.integer(mass_modi))
+
+s <- sample_n(pidff_subset, N)
+mean(s$pressure)
+sd(s$pressure)
+
+se <- sd(s$pressure) / sqrt(N)
+se
+
+nsamples <- 500
+h0mean <- 70
+h0 <- rnorm(nsamples, mean=h0mean, sd=se)
+h0 <- tibble(sample=seq_len(nsamples), mean=h0)
+
+ggplot(h0, aes(x=mean)) + 
+  geom_histogram(binwidth=0.2) +
+  geom_vline(xintercept=h0mean,
+             color="blue") +
+  geom_vline(xintercept=mean(s$pressure),
+             linetype="dotdash",
+             color="red") +
+  labs(title='Mean Simulation') +
+  theme_minimal()
+
+summarize(h0, PValue=mean(mean > mean(s$pressure))) 
+
+z <- (mean(s$pressure) - h0mean) / se
+1 - pnorm(z)
+```
+
+The output of both the models are different. The alpha value has been changed from 0.05 to 0.2 and now the mean and sample mean values are very close to each other. This indicated the % of error is less in comparision to the first model. 

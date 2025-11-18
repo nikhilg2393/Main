@@ -1,0 +1,126 @@
+---
+title: "HW4 Part 4 Prblm 3"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("/Users/nikhilg/IDMP/HW3")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+#path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+path5 <- file.path(mydir2, "ddf--datapoints--murder_per_100000_people--by--geo--time.csv")
+path6 <- file.path(mydir2, "ddf--datapoints--gdppercapita_us_inflation_adjusted--by--geo--time.csv")
+path7 <- file.path(mydir2, "ddf--datapoints--medical_doctors_per_1000_people--by--geo--time.csv")
+path8 <- file.path(mydir2, "ddf--datapoints--poverty_percent_people_below_550_a_day--by--geo--time.csv")
+ddfCountry <- read_csv(path1, show_col_types = FALSE)
+#ddfW4R <- read_csv(path2)
+ddfIMR <- read_csv(path3, show_col_types = FALSE)
+ddfLEY <- read_csv(path4, show_col_types = FALSE)
+ddfMPP <- read_csv(path5, show_col_types = FALSE)
+ddfGDP <- read_csv(path6, show_col_types = FALSE)
+ddfMDP <- read_csv(path7, show_col_types = FALSE)
+ddfPPP <- read_csv(path8, show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(reshape)
+mapdata <- left_join(ddfLEY, ddfIMR, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMPP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfGDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfPPP, by = c('geo'='geo', 'time'='time'))
+mapdata1 <- subset(mapdata, !is.na(mapdata$infant_mortality_rate_per_1000_births))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$life_expectancy_years))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$murder_per_100000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$gdppercapita_us_inflation_adjusted))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$medical_doctors_per_1000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$poverty_percent_people_below_550_a_day))
+
+fit1 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data=mapdata1)
+summary(fit1)
+
+outliers <- mapdata1 %>%
+  add_residuals(fit1, "resid") %>%
+  filter(resid < -0.2)
+outliers
+
+mapdata2 <- anti_join(mapdata1, outliers, by=c("geo", "time"))
+fit2 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data=mapdata2)
+summary(fit2)
+
+g1<-mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=log10(murder_per_100000_people),y=resid)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm", color="red") +
+  labs(x="Log murder_per_100000_people", y="Residuals") +
+  theme_minimal()
+
+g2<-mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=log10(gdppercapita_us_inflation_adjusted),y=resid)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm", color="red") +
+  labs(x="Log gdppercapita", y="Residuals") +
+  theme_minimal()
+
+g3<-mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=log10(medical_doctors_per_1000_people),y=resid)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm", color="red") +
+  labs(x="Log medical_doctors_per_1000_people", y="Residuals") +
+  theme_minimal()
+
+g4<-mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=log10(poverty_percent_people_below_550_a_day),y=resid)) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method="lm", color="red") +
+  labs(x="Log poverty_percentage", y="Residuals") +
+  theme_minimal()
+
+gridExtra::grid.arrange(g1, g2, g3, g4)
+```
+
+# Residual plot of model diagnostics for single and multiple predictors
+
+The residue is left skewed for a single predictor where as the residue is more spread and symmetirc for multiple predictors. 
+There are few outliners that are observed in the box plot for the single predictor. The number of outlines are reduced as observed in the box plot for multiple predictors and as the number predictors increases the outliners decreases.
+
+```{r}
+fit3 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people + poverty_percent_people_below_550_a_day), data=mapdata2)
+summary(fit3)
+
+  g5<-mapdata2 %>%
+  add_residuals(fit3, "resid") %>%
+  ggplot(aes(x=log10(medical_doctors_per_1000_people),y=resid)) +
+  geom_point() +
+  labs(x="Log medical_doctors_per_1000_people", y="Residuals") +
+  theme_minimal()
+
+  g6 <- mapdata2 %>%
+  add_residuals(fit3, "resid") %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq()
+gridExtra::grid.arrange(g5, g6, ncol=2)
+```

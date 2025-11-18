@@ -1,0 +1,255 @@
+---
+title: "HW5 Part B Prblm 4"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(mlbench)
+library("stringr")
+library(modelr)
+library(reshape)
+library(tidyverse)
+data(PimaIndiansDiabetes2)
+piddf <- na.omit(PimaIndiansDiabetes2)
+```
+
+```{r}
+fit <- lm(pressure ~ diabetes, data=piddf)
+fit1 <- lm(pressure ~ glucose, data=piddf)
+fit2 <- lm(pressure ~ triceps, data=piddf)
+fit3 <- lm(pressure ~ insulin, data=piddf)
+fit4 <- lm(pressure ~ mass, data=piddf)
+fit5 <- lm(pressure ~ age, data=piddf)
+fit6 <- lm(pressure ~ pedigree, data=piddf)
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit) %>%
+  ggplot(aes(x=diabetes, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=diabetes, yend=pred), color="red") +
+  labs(title='Model Prediction for Blood Pressure for people with & without Diabetes',x="People with & without Diabetes", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit) %>%
+  ggplot(aes(x=diabetes, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Diabetes") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit1) %>%
+  ggplot(aes(x=glucose, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=glucose, yend=pred), color="blue") +
+  labs(title='Model Prediction for Blood Pressure of people with different glucose levels',x="People glucose level", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit1, "resid") %>%
+  ggplot(aes(x=glucose, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Glucose") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit2) %>%
+  ggplot(aes(x=triceps, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=triceps, yend=pred), color="green") +
+  labs(title='Model Prediction for Blood Pressure of people with different triceps',x="People triceps", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=triceps, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Triceps") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit3) %>%
+  ggplot(aes(x=insulin, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=insulin, yend=pred), color="yellow") +
+  labs(title='Model Prediction for Blood Pressure of people with different insulin levels',x="People insulin levels", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit3, "resid") %>%
+  ggplot(aes(x=insulin, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Insulin") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit4) %>%
+  ggplot(aes(x=mass, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=mass, yend=pred), color="cyan") +
+  labs(title='Model Prediction for Blood Pressure of people with different mass',x="People mass", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit4, "resid") %>%
+  ggplot(aes(x=mass, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Mass") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit5) %>%
+  ggplot(aes(x=age, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=age, yend=pred), color="magenta") +
+  labs(title='Model Prediction for Blood Pressure of people with different age',x="People age", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit5, "resid") %>%
+  ggplot(aes(x=age, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Age") +
+  theme_minimal()
+```
+
+```{r}
+piddf %>%
+  add_predictions(fit6) %>%
+  ggplot(aes(x=pedigree, y=pressure)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=pedigree, yend=pred), color="turquoise") +
+  labs(title='Model Prediction for Blood Pressure of people with different pedigree',x="People pedigree", y="Blood Pressure")+
+  theme_minimal()
+```
+
+```{r}
+  piddf %>%
+  add_residuals(fit6, "resid") %>%
+  ggplot(aes(x=pedigree, y=resid)) +
+  geom_jitter() +
+  geom_boxplot() +
+  labs(y="residuals",
+       title="Residuals: Pedigree") +
+  theme_minimal()
+```
+
+```{r}
+AIC(fit)
+AIC(fit1)
+AIC(fit2)
+AIC(fit3)
+AIC(fit4)
+AIC(fit5)
+AIC(fit6)
+```
+
+```{r}
+ggplot(piddf, aes(x=glucose, y=pressure)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Glucose", y="Blood pressue",
+       title="Glucose: No relationship") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(piddf, aes(x=insulin, y=pressure)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Insulin", y="Blood pressue",
+       title="Insulin: No relationship") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(piddf, aes(x=triceps, y=pressure)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Triceps skin fold thickness", y="Blood pressue",
+       title="Triceps skin fold thickness: Weak positive relationship") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(piddf, aes(x=mass, y=pressure)) +
+  geom_jitter() +
+  geom_smooth() +
+  labs(x="Body mass index (BMI)", y="Blood pressue",
+       title="BMI: Positive relationship") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(piddf, aes(x=age, y=pressure)) +
+  geom_jitter() +
+  geom_smooth() +
+  labs(x="Age", y="Blood pressue",
+       title="Age: Positive relationship") +
+  theme_minimal()
+```
+
+```{r}
+ fit7 <- lm(pressure ~ diabetes + age + mass + triceps, data=piddf)
+step(fit2)
+```
+
+```{r}
+fit8 <- lm(pressure ~ diabetes + age + mass, data=piddf)
+```
+
+```{r}
+AIC(fit7)
+AIC(fit8)
+```
+Plotted all the different different covariables against the pressure and performed model diagnostics. I have added pedigree along with the mentioned insulin, glucose, age, mass, triceps. Akaike Information Criterion (AIC) performed on each of the models shows that the prediction model of blood pressure vs mass (fit4) has the lowest value of AIC compared to the rest. Smaller values indicate a better fit. So the prediction model of blood pressure vs mass (fit4) is the better fit than the rest.

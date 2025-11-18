@@ -1,0 +1,146 @@
+---
+title: "HW4 Part A Prblm2"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("/Users/nikhilg/IDMP/HW3")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+#path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+path5 <- file.path(mydir2, "ddf--datapoints--murder_per_100000_people--by--geo--time.csv")
+path6 <- file.path(mydir2, "ddf--datapoints--gdppercapita_us_inflation_adjusted--by--geo--time.csv")
+path7 <- file.path(mydir2, "ddf--datapoints--medical_doctors_per_1000_people--by--geo--time.csv")
+path8 <- file.path(mydir2, "ddf--datapoints--poverty_percent_people_below_550_a_day--by--geo--time.csv")
+ddfCountry <- read_csv(path1, show_col_types = FALSE)
+#ddfW4R <- read_csv(path2)
+ddfIMR <- read_csv(path3, show_col_types = FALSE)
+ddfLEY <- read_csv(path4, show_col_types = FALSE)
+ddfMPP <- read_csv(path5, show_col_types = FALSE)
+ddfGDP <- read_csv(path6, show_col_types = FALSE)
+ddfMDP <- read_csv(path7, show_col_types = FALSE)
+ddfPPP <- read_csv(path8, show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(reshape)
+mapdata <- left_join(ddfLEY, ddfIMR, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMPP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfGDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfPPP, by = c('geo'='geo', 'time'='time'))
+mapdata1 <- subset(mapdata, !is.na(mapdata$infant_mortality_rate_per_1000_births))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$life_expectancy_years))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$murder_per_100000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$gdppercapita_us_inflation_adjusted))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$medical_doctors_per_1000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$poverty_percent_people_below_550_a_day))
+
+fit1 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data=mapdata1)
+summary(fit1)
+
+ g1 <- mapdata1 %>%
+  add_predictions(fit1, "log10pred") %>%
+  mutate(pred = 10^log10pred) %>%
+  ggplot(aes(x=medical_doctors_per_1000_people)) +
+  geom_point(aes(y=life_expectancy_years), alpha=0.2) +
+  geom_line(aes(y=pred), color="red", size=10) +
+  coord_cartesian(xlim=range(mapdata1$medical_doctors_per_1000_people),
+                  ylim=range(mapdata1$life_expectancy_years)) +
+  labs(title='Life Expectancy Vs Medical Doctors/1000 people',x="Medical Doctors/1000 people", y="Life Expectancy") +
+  theme_minimal()
+
+  g2 <- mapdata1 %>%
+  add_residuals(fit1, "resid") %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq()
+gridExtra::grid.arrange(g1, g2, ncol=2)
+  
+  g3 <-mapdata1 %>%
+  add_residuals(fit1, "resid") %>%
+  ggplot(aes(x=log10(medical_doctors_per_1000_people))) +
+  geom_point(aes(y=resid), alpha=0.3) +
+  labs(title='Residuals Vs Log (Medical Doctors/1000 people)',x="Log medical_doctors_per_1000_people", y="Residuals") +
+  theme_minimal()
+   
+  g4 <- mapdata1 %>%
+  add_residuals(fit1, "resid") %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq()
+gridExtra::grid.arrange(g3, g4, ncol=2)
+
+outliers <- mapdata1 %>%
+  add_residuals(fit1, "resid") %>%
+  filter(resid < -0.2)
+outliers
+
+mapdata2 <- anti_join(mapdata1, outliers, by=c("geo", "time"))
+fit2 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data=mapdata2)
+summary(fit2)
+
+ g5 <- mapdata2 %>%
+  add_predictions(fit2, "log10pred") %>%
+  mutate(pred = 10^log10pred) %>%
+  ggplot(aes(x=medical_doctors_per_1000_people)) +
+  geom_point(aes(y=life_expectancy_years), alpha=0.2) +
+  geom_line(aes(y=pred), color="red", size=10) +
+  coord_cartesian(xlim=range(mapdata1$medical_doctors_per_1000_people),
+                  ylim=range(mapdata1$life_expectancy_years)) +
+  labs(title='Life Expectancy Vs Medical Doctors/1000 people',x="Medical Doctors/1000 people", y="Life Expectancy") +
+  theme_minimal()
+
+  g6 <- mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq()
+gridExtra::grid.arrange(g5, g6, ncol=2)
+  
+  g7 <-mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=log10(medical_doctors_per_1000_people))) +
+  geom_point(aes(y=resid), alpha=0.3) +
+  labs(title='Residuals Vs Log (Medical Doctors/1000 people)',x="Log medical_doctors_per_1000_people", y="Residuals") +
+  theme_minimal()
+   
+  g8 <- mapdata2 %>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(sample=resid)) +
+  geom_qq()
+gridExtra::grid.arrange(g7, g8, ncol=2)
+
+  mapdata1%>%
+  add_residuals(fit1, "resid") %>%
+  ggplot(aes(x=medical_doctors_per_1000_people, y=resid)) +
+  geom_boxplot() +
+  labs(title='Residuals Vs Log (Medical Doctors/1000 people)',x="Medical Doctor/1000 people", y="Residuals") +
+  theme_minimal()
+  
+  mapdata2%>%
+  add_residuals(fit2, "resid") %>%
+  ggplot(aes(x=medical_doctors_per_1000_people, y=resid)) +
+  geom_boxplot() +
+  labs(title='Residuals Vs Log (Medical Doctors/1000 people)',x="Medical Doctor/1000 people", y="Residuals") +
+  theme_minimal()
+```
+
+# Residual plot of model diagnostics
+
+The residue is left skewed and there are few outliners that are observed in the box plot.
+
+

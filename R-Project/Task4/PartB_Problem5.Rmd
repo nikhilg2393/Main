@@ -1,0 +1,69 @@
+---
+title: "HW4 Part B Prblm 5"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library("plyr")
+setwd("/Users/nikhilg/IDMP/HW3")
+mydir = "ddf--gapminder--systema_globalis-master"
+mydir2 = "ddf--gapminder--systema_globalis-master/countries-etc-datapoints"
+path1 <- file.path(mydir, "ddf--entities--geo--country.csv")
+#path2 <- file.path(mydir, "ddf--entities--geo--world_4region.csv")
+path3 <- file.path(mydir2, "ddf--datapoints--infant_mortality_rate_per_1000_births--by--geo--time.csv")
+path4 <- file.path(mydir2, "ddf--datapoints--life_expectancy_years--by--geo--time.csv")
+path5 <- file.path(mydir2, "ddf--datapoints--murder_per_100000_people--by--geo--time.csv")
+path6 <- file.path(mydir2, "ddf--datapoints--gdppercapita_us_inflation_adjusted--by--geo--time.csv")
+path7 <- file.path(mydir2, "ddf--datapoints--medical_doctors_per_1000_people--by--geo--time.csv")
+path8 <- file.path(mydir2, "ddf--datapoints--poverty_percent_people_below_550_a_day--by--geo--time.csv")
+ddfCountry <- read_csv(path1, show_col_types = FALSE)
+#ddfW4R <- read_csv(path2)
+ddfIMR <- read_csv(path3, show_col_types = FALSE)
+ddfLEY <- read_csv(path4, show_col_types = FALSE)
+ddfMPP <- read_csv(path5, show_col_types = FALSE)
+ddfGDP <- read_csv(path6, show_col_types = FALSE)
+ddfMDP <- read_csv(path7, show_col_types = FALSE)
+ddfPPP <- read_csv(path8, show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(reshape)
+mapdata <- left_join(ddfLEY, ddfIMR, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMPP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfGDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfMDP, by = c('geo'='geo', 'time'='time'))
+mapdata <- left_join(mapdata, ddfPPP, by = c('geo'='geo', 'time'='time'))
+mapdata1 <- subset(mapdata, !is.na(mapdata$infant_mortality_rate_per_1000_births))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$life_expectancy_years))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$murder_per_100000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$gdppercapita_us_inflation_adjusted))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$medical_doctors_per_1000_people))
+mapdata1 <- subset(mapdata1, !is.na(mapdata1$poverty_percent_people_below_550_a_day))
+
+map_data_part <- resample_partition(mapdata1,
+                                    p=c(train=0.5,
+                                        valid=0.25,
+                                        test=0.25))
+fit_t1 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people), data=map_data_part$train)
+
+fit_t2 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people + poverty_percent_people_below_550_a_day), data=map_data_part$train)
+
+fit_t3 <- lm(log(life_expectancy_years) ~ log(medical_doctors_per_1000_people + poverty_percent_people_below_550_a_day + murder_per_100000_people), data=map_data_part$train)
+
+rmse(fit_t1, map_data_part$valid)
+rmse(fit_t2, map_data_part$valid)
+rmse(fit_t3, map_data_part$valid)
+
+rmse(fit_t3, map_data_part$test)
+```
