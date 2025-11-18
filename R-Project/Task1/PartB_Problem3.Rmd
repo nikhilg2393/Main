@@ -1,0 +1,29 @@
+---
+title: "Part B Problem 3"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Life Expectancy Histogram}
+library(gapminder)
+library(ggplot2)
+ggplot(gapminder, aes(x=lifeExp, fill=continent)) + geom_histogram(binwidth=2) + facet_wrap(~continent) +
+labs(x="Life expectancy (years)", y="Count",
+title="Distribution of life expectancy across the world (1952-2007)") + theme_minimal()
+```
+
+
+
+
+
+## Relationship between Life Expectancy and Continent
+
+The shape of the graph for all the other continents is Left Skewed except for Africa which is Right Skewed
+
+For Africa the life expectancy is very less where as its high in Americas , Europe. The life expectancy in Asia is more evenly distributed.
+

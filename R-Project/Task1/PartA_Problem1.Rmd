@@ -1,0 +1,35 @@
+---
+title: "Part A Problem 1"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+
+testdf <-data.frame(row.names=c("Jack", "Rosa", "Dawn", "Vicki", "Blake", "Guillermo"),age=c(24, 23, NA, 25, 32, 19),city=c("Harlem", NA, "Queens", "Brooklyn", "Brooklyn", NA),gpa=c(3.5, 3.6, 4.0, NA, 3.8, NA))
+
+countNA <- function(data, byrow = FALSE) {
+  if ( byrow ) 
+    {
+      countNA_row <- function(ic) sum(is.na(data[ic,,drop=FALSE]))
+      result <- vapply(seq_len(nrow(data)), countNA_row, numeric(1))
+      names(result) <-rownames(data)
+} 
+  else 
+    {
+      countNA_col <- function(ir) sum(is.na(data[[ir]]))
+      result <- vapply(seq_len(ncol(data)), countNA_col, numeric(1))
+      names(result) <- colnames(data)
+} 
+  result
+}# call funtions
+countNA(testdf,byrow =TRUE)
+countNA(testdf)
+````

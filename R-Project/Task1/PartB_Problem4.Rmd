@@ -1,0 +1,28 @@
+---
+title: "Part B Problem 4"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Life Expectancy Box Plot}
+library(gapminder)
+library(ggplot2)
+ggplot(gapminder, aes(x=as.factor(year), y=lifeExp, color=continent)) + geom_boxplot() +
+facet_wrap(~continent) +
+labs(x="Year", y="Life expectancy (years)",
+title="Life expectancy has increased worldwide (1952 - 2007)") + theme_minimal() +
+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+
+
+
+## Evoltuion of Life Expectancy 
+
+Over the years from 1950 to 1965 the life expectancy has gone up and was constant over the period of 1966 to 1994 and has again dropped from 1995 to 2000 we can see there again a drop in life expectany.
+

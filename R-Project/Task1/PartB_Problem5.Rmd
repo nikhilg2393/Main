@@ -1,0 +1,26 @@
+---
+title: "Part B Problem 5"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Life Expectancy Scatter Plot}
+ggplot(gapminder, aes(x=gdpPercap, y=lifeExp, color=continent)) + geom_point(size=0.5) +
+geom_smooth() +
+scale_x_log10() +
+labs(x="GDP per capita (US$)", y="Life expectancy (years)", title="Life expectancy increases with GDP per capita") +
+theme_minimal()
+```
+
+
+
+
+
+## Relationship between Life Expectancy and GDP Per Capita
+
+The GDP per capita of all the continents has increased with increase in Life Expectancy
