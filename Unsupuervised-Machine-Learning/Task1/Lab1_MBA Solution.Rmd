@@ -1,0 +1,64 @@
+---
+title: "MBA Solutions"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r MBASolutions}
+library(tidyverse)
+library(e1071)
+library(arules)
+library(RColorBrewer)
+dir1 <- "~/Downloads"
+dir2 <- "Archive"
+path <- file.path(dir1, dir2, "LAB1MBA.csv")
+mbaS <- read_csv(path,guess_max=4000)
+mbaS
+
+nItems <-  50
+nTrans <- 1000
+maxBasketSize <- 5
+minSupport <- 0.015
+minConfidence <- 0.01
+minLift <- 1.0
+items <- as.character(1:nItems)
+
+purchase <- as(mbaS,"transactions")
+summary(purchase)
+print(purchase)
+
+itemFrequencyPlot(purchase, topN=nItems, type="absolute",col=brewer.pal(8,'Pastel2'), main="Absolute Item Frequency Plot")
+  
+rules <- apriori(purchase, parameter = list(support = minSupport, confidence = minConfidence))
+rules
+summary(rules)
+
+freqItemsets <- subset(rules, support > minSupport & confidence > minConfidence & lift > minLift)
+print("Frequent Itemsets: ")
+inspect(head(freqItemsets, n=75, by="count"))
+
+highLiftRules <- subset(rules, subset = lift > minLift)
+print("Interesting Association Rules: ")
+inspect(head(highLiftRules, n=50, by="lift"))
+
+freqItemsets <- subset(rules, support > .1 & confidence > .05 & lift > 2)
+print("Frequent Itemsets: ")
+inspect(head(freqItemsets, n=100, by="count"))
+
+freqItemsets <- subset(rules, support > .083 & confidence > .041 & lift > 1.5)
+print("Frequent Itemsets: ")
+inspect(head(freqItemsets, n=100, by="count"))
+```
+
+##Relation between Variables
+
+For most of the cases the confidence goes up with lift. 
+The more higher the value of minimum support , minimum confidence and minimum lift the less the number of association rules and frequent item sets.

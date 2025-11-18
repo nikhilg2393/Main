@@ -1,0 +1,81 @@
+---
+title: "HW3 Prblm 5"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r flag}
+# load data
+dir1 <- "~/Downloads"
+dir2 <- "H3DS5230Data"
+path1 <- file.path(dir1, dir2, "flagTrainSPAM.csv")
+path2 <- file.path(dir1, dir2, "flagTestSPAM.csv")
+path3 <- file.path(dir1, dir2, "flagTrainHam.csv")
+path4 <- file.path(dir1, dir2, "flagTestHam.csv")
+flagTrainSPAM <- as.matrix(read.csv(path1))
+flagTrainSPAM <- flagTrainSPAM[,-1]
+flagTestSPAM <- as.matrix(read.csv(path2))
+flagTestSPAM <- flagTestSPAM[,-1]
+flagTrainHam <- as.matrix(read.csv(path3))
+flagTrainHam <- flagTrainHam[,-1]
+flagTestHam <- as.matrix(read.csv(path4))
+flagTestHam <- flagTestHam[,-1]
+
+# form sufficient statistics adding the data
+# Adding Column data
+sumTestSPAM <- colSums(flagTestSPAM)
+sumTestHam <- colSums(flagTestHam)
+sumTrainSPAM <- colSums(flagTrainSPAM)
+sumTrainHam <- colSums(flagTrainHam)
+
+#Getting the row count
+NTestSPAM <- nrow(flagTestSPAM)
+NTestHam <- nrow(flagTestHam)
+NTrainSPAM <- nrow(flagTrainSPAM)
+NTrainHam <- nrow(flagTrainHam)
+#generate MLE estimators of thetas
+theta_Ham_MLE <- sumTrainHam/NTrainHam
+theta_SPAM_MLE <- sumTrainSPAM/NTrainSPAM
+#generate MAP estimators of thetas
+theta_Ham_MAP <- (sumTrainHam+1)/(NTrainHam + 2)
+theta_SPAM_MAP <- (sumTrainSPAM+1)/(NTrainSPAM + 2)
+
+#compare estimators in plot
+par(mfrow = c(1,2))
+dictLen = 40
+plot(seq_len(dictLen), theta_Ham_MLE, pch=6, col=2)
+points(seq_len(dictLen), theta_Ham_MAP, col=3)
+legend(1,1,legend = c("True","MLE","MAP"),pch=c(10,6,1),col=c(1,2,3),cex=0.8, bg="lightgreen")
+plot(seq_len(dictLen), theta_SPAM_MLE, pch=6, col=2)
+points(seq_len(dictLen), theta_SPAM_MAP, col=3)
+legend(1,0.8,legend = c("True","MLE","MAP"),pch=c(10,6,1),col=c(1,2,3),cex=0.8, bg="lightgreen")
+
+# compute the log of posterior ratio for Spam and Ham test samples
+# log ratio of entry hits
+logHitProbabilityRatio <- log(theta_SPAM_MAP/theta_Ham_MAP)
+# log ratio of entry misses
+logMissProbabilityRatio <- log((1-theta_SPAM_MAP)/(1-theta_Ham_MAP))
+logAPProbRatioSPAMTest <- vector(mode = "double", length = nrow(flagTestSPAM))
+logAPProbRatioHamTest <- vector(mode = "double", length = nrow(flagTestHam))
+for (i in row(flagTestHam)) {
+logAPProbRatioSPAMTest[i] <- sum( (flagTestSPAM[i,]+1)* logHitProbabilityRatio + (2-flagTestSPAM[i,]) * logMissProbabilityRatio )
+logAPProbRatioHamTest[i] <- sum( (flagTestHam[i,]+1)* logHitProbabilityRatio + (2-flagTestHam[i,]) * logMissProbabilityRatio )
+}
+
+# Plot of Spam and Ham test statistics
+par(mfrow=c(1,2))
+histSPAM <- hist(logAPProbRatioSPAMTest,breaks=100, col = 3, main = "test stat. SPAM")
+histHam <- hist(logAPProbRatioHamTest,breaks=100, col = 2, main = "test stat. Ham")
+
+#Calculating Error Rates
+errorRateSPAM <- sum(logAPProbRatioSPAMTest<0)/nrow(flagTestSPAM)
+errorRateHam <- sum(logAPProbRatioHamTest>0)/nrow(flagTestHam)
+errorRateSPAM
+errorRateHam
+
+```
